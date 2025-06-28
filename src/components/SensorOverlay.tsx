@@ -44,25 +44,37 @@ const SensorOverlay: React.FC<SensorOverlayProps> = ({ detection, onClose, isVis
   const { type, confidence, bounds, sensorData } = detection;
   const { temperature, humidity, fsr } = sensorData || {};
 
+  console.log('SensorOverlay - Detection type:', type);
+  console.log('SensorOverlay - Sensor data:', sensorData);
+  console.log('SensorOverlay - Temperature:', temperature, 'Humidity:', humidity, 'FSR:', fsr);
+
   const getSensorDisplayData = () => {
-    if (type === 'temp_humidity') {
-      return [
-        { ...SENSOR_DISPLAY_CONFIG.TEMPERATURE, value: temperature },
-        { ...SENSOR_DISPLAY_CONFIG.HUMIDITY, value: humidity },
-      ];
-    }
-    if (type === 'fsr') {
-      return [{ ...SENSOR_DISPLAY_CONFIG.FSR, value: fsr }];
-    }
-    return [];
+    // Always show all three sensor values regardless of detection type
+    return [
+      { ...SENSOR_DISPLAY_CONFIG.TEMPERATURE, value: temperature },
+      { ...SENSOR_DISPLAY_CONFIG.HUMIDITY, value: humidity },
+      { ...SENSOR_DISPLAY_CONFIG.FSR, value: fsr },
+    ];
   };
 
   const sensorDisplayData = getSensorDisplayData();
 
-  const overlayPosition = {
-    left: Math.max(10, Math.min(bounds.x, width - 210)),
-    top: Math.max(10, Math.min(bounds.y, height - 150)),
+  // Calculate overlay position based on detected object bounds
+  const calculateOverlayPosition = () => {
+    const overlayWidth = 200;
+    const overlayHeight = 150;
+    
+    // Fixed position: middle-left of the screen
+    const fixedLeft = 20;
+    const fixedTop = (height - overlayHeight) / 2; // Center vertically
+    
+    return {
+      left: fixedLeft,
+      top: fixedTop,
+    };
   };
+
+  const overlayPosition = calculateOverlayPosition();
 
   return (
     <Animated.View

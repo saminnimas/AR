@@ -9,8 +9,9 @@ import {
   Animated,
 } from 'react-native';
 import { CameraView, useCameraPermissions, CameraType, FlashMode } from 'expo-camera';
-import { COLORS, ERROR_MESSAGES } from '../utils/constants';
+import { COLORS, ERROR_MESSAGES, SENSOR_TYPES } from '../utils/constants';
 import { SensorData, Detection } from '../utils/types';
+import { detectObjects } from '../services/YOLOAPI';
 
 const { width, height } = Dimensions.get('window');
 
@@ -52,36 +53,24 @@ const CameraViewComponent: React.FC<CameraViewProps> = ({
     }).start();
   }, [fadeAnim]);
 
-  // This is a mock detection. In a real app, you would integrate a TensorFlow.js Lite model here.
-  const handleFrameProcessing = () => {
-    if (isProcessing || !isARMode) return;
-    setIsProcessing(true);
-    setTimeout(() => {
-      const mockDetection: Detection = {
-        id: Date.now(),
-        type: Math.random() > 0.5 ? 'temp_humidity' : 'fsr',
-        confidence: 0.85 + Math.random() * 0.1,
-        bounds: {
-          x: width * 0.2 + Math.random() * (width * 0.6),
-          y: height * 0.2 + Math.random() * (height * 0.6),
-          width: 100,
-          height: 100,
-        },
-        sensorData: sensorData,
-        timestamp: new Date().toISOString(),
-      };
-      onSensorDetected(mockDetection);
-      setIsProcessing(false);
-    }, 2000); // Simulate processing time
-  };
-
   const takePicture = async () => {
     if (cameraRef.current) {
       try {
         const photo = await cameraRef.current.takePictureAsync({ quality: 0.8 });
         console.log('Picture taken:', photo.uri);
-      } catch (error) {
-        console.error('Error taking picture:', error);
+        setIsProcessing(true);
+        // Call YOLO API
+        const detections = await detectObjects(photo.uri);
+        if (detections && detections.length > 0) {
+          onSensorDetected(detections[0]); // Use the first detection for overlay
+        } else {
+          Alert.alert('No objects detected');
+        }
+      } catch (error: any) {
+        console.error('Error taking picture or detecting:', error);
+        Alert.alert('Detection Error', error?.message || 'Failed to detect objects.');
+      } finally {
+        setIsProcessing(false);
       }
     }
   };
@@ -100,7 +89,7 @@ const CameraViewComponent: React.FC<CameraViewProps> = ({
         style={styles.camera}
         facing={cameraType}
         flash={flashMode}
-        onCameraReady={handleFrameProcessing} // Use onCameraReady to trigger first detection
+        onCameraReady={() => {}} // Use onCameraReady to trigger first detection
         onMountError={(error: any) => console.error("Camera mount error:", error)}
         ratio="16:9"
         autofocus="on"
@@ -117,7 +106,7 @@ const CameraViewComponent: React.FC<CameraViewProps> = ({
           <TouchableOpacity style={styles.controlButton} onPress={() => setFlashMode(flashMode === 'off' ? 'on' : 'off')}>
             <Text style={styles.controlButtonText}>⚡️</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.captureButton} onPress={takePicture} onLongPress={handleFrameProcessing} />
+          <TouchableOpacity style={styles.captureButton} onPress={takePicture} />
           <TouchableOpacity style={styles.controlButton} onPress={() => setCameraType(cameraType === 'back' ? 'front' : 'back')}>
             <Text style={styles.controlButtonText}>🔄</Text>
           </TouchableOpacity>

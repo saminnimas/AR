@@ -14,16 +14,17 @@ const ARScreen: React.FC = () => {
   });
   const [activeDetection, setActiveDetection] = useState<Detection | null>(null);
   const [isOverlayVisible, setIsOverlayVisible] = useState(false);
+  const [showAlwaysOnOverlay, setShowAlwaysOnOverlay] = useState(true); 
   
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     // Start polling when the component mounts
     pollingIntervalRef.current = ThingSpeakAPI.startPolling((data) => {
+      console.log('ARScreen - Received sensor data:', data);
       setSensorData(data);
     }, AR_CONFIG.OVERLAY_UPDATE_INTERVAL);
 
-    // Stop polling when the component unmounts
     return () => {
       if (pollingIntervalRef.current) {
         ThingSpeakAPI.stopPolling(pollingIntervalRef.current);
@@ -32,7 +33,17 @@ const ARScreen: React.FC = () => {
   }, []);
 
   const handleSensorDetected = (detection: Detection) => {
-    setActiveDetection(detection);
+    console.log('ARScreen - Object detected:', detection);
+    console.log('ARScreen - Current sensor data:', sensorData);
+    
+    const detectionWithSensorData = {
+      ...detection,
+      sensorData: sensorData, 
+    };
+    
+    console.log('ARScreen - Detection with sensor data:', detectionWithSensorData);
+    
+    setActiveDetection(detectionWithSensorData);
     setIsOverlayVisible(true);
     
     setTimeout(() => {
@@ -45,6 +56,24 @@ const ARScreen: React.FC = () => {
     setActiveDetection(null);
   };
 
+  const getAlwaysOnDetection = (): Detection | null => {
+    if (!showAlwaysOnOverlay) return null;
+    
+    return {
+      id: -1, 
+      type: 'temp_humidity', 
+      confidence: 1.0,
+      bounds: {
+        x: 20,
+        y: 100,
+        width: 200,
+        height: 150,
+      },
+      timestamp: new Date().toISOString(),
+      sensorData: sensorData,
+    };
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" />
@@ -53,10 +82,19 @@ const ARScreen: React.FC = () => {
         sensorData={sensorData}
         isARMode={true}
       />
+      
+      {/* Show detection overlay when objects are detected */}
       <SensorOverlay
         detection={activeDetection}
         isVisible={isOverlayVisible}
         onClose={handleOverlayClose}
+      />
+      
+      {/* Show always-on sensor data overlay */}
+      <SensorOverlay
+        detection={getAlwaysOnDetection()}
+        isVisible={showAlwaysOnOverlay && !isOverlayVisible}
+        onClose={() => setShowAlwaysOnOverlay(false)}
       />
     </SafeAreaView>
   );
