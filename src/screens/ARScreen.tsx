@@ -11,6 +11,7 @@ const ARScreen: React.FC = () => {
     temperature: null,
     humidity: null,
     fsr: null,
+    rpm: null,
   });
   const [activeDetection, setActiveDetection] = useState<Detection | null>(null);
   const [isOverlayVisible, setIsOverlayVisible] = useState(false);

@@ -32,6 +32,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     temperature: null,
     humidity: null,
     fsr: null,
+    rpm: null,
   });
   const [isLoading, setIsLoading] = useState(true);
 
@@ -81,6 +82,10 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
         <View style={styles.sensorCard}>
             <Text style={styles.sensorLabel}>⚡️ Force (FSR)</Text>
             {renderSensorValue(sensorData.fsr, ' N')}
+        </View>
+        <View style={styles.sensorCard}>
+            <Text style={styles.sensorLabel}>🔄 RPM</Text>
+            {renderSensorValue(sensorData.rpm, '')}
         </View>
       </View>
 

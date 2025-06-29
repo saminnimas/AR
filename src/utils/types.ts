@@ -5,6 +5,7 @@ export interface SensorData {
   temperature: number | null;
   humidity: number | null;
   fsr: number | null;
+  rpm: number | null;
 }
 
 /**

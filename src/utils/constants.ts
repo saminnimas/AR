@@ -15,6 +15,7 @@ export const THINGSPEAK_CONFIG = {
     TEMPERATURE: 1,
     FSR: 2,
     HUMIDITY: 4,
+    RPM: 3,
   },
 };
 

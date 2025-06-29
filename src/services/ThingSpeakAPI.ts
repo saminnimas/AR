@@ -8,6 +8,7 @@ class ThingSpeakAPI {
     temperature: null,
     humidity: null,
     fsr: null,
+    rpm: null,
   };
 
   /**
@@ -44,13 +45,14 @@ class ThingSpeakAPI {
     const now = Date.now();
     if (now - this.lastFetch > THINGSPEAK_CONFIG.FETCH_INTERVAL) {
       try {
-        const [temperature, fsr, humidity] = await Promise.all([
+        const [temperature, fsr, humidity, rpm] = await Promise.all([
           this.fetchLatestField(THINGSPEAK_CONFIG.FIELDS.TEMPERATURE),
           this.fetchLatestField(THINGSPEAK_CONFIG.FIELDS.FSR),
           this.fetchLatestField(THINGSPEAK_CONFIG.FIELDS.HUMIDITY),
+          this.fetchLatestField(THINGSPEAK_CONFIG.FIELDS.RPM),
         ]);
 
-        this.cachedData = { temperature, humidity, fsr };
+        this.cachedData = { temperature, humidity, fsr, rpm };
         this.lastFetch = now;
       } catch (error) {
         console.error('Error fetching all sensor data:', error);
